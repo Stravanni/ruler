@@ -86,7 +86,7 @@ object EDJoin {
   /**
     * Ritorna le coppie che hanno ED <= threshold
     **/
-  def getCandidates(documents: List[(Long, String)], qgramLength: Int, threshold: Int, log: PrintWriter): (Map[Long, String], List[(Long, Long)]) = {
+  def getCandidates(documents: List[(Long, String)], qgramLength: Int, threshold: Int, log: PrintWriter): (Map[Long, String], List[(Long, Long)], Long, Long) = {
 
     val t1 = Calendar.getInstance().getTimeInMillis
 
@@ -98,6 +98,9 @@ object EDJoin {
 
     //Costruisce il prefix index
     val prefixIndex = CommonEdFunctions.buildPrefixIndex(sortedDocs, qgramLength, threshold)
+    val t2 = Calendar.getInstance().getTimeInMillis
+    log.println("[EDJoin] Tempo di creazione dell'indice " + (t2 - t1))
+    val tIndex = t2 - t1
 
     //Candidati
     var preCandidates: List[(Long, Long)] = Nil
@@ -114,8 +117,8 @@ object EDJoin {
     val prefixLen = EdFilters.getPrefixLen(qgramLength, threshold)
 
 
-    val t2 = Calendar.getInstance().getTimeInMillis
-    log.println("[EDJoin] Tempo inizializzazione " + CommonFunctions.msToMin(t2 - t1))
+    val t3 = Calendar.getInstance().getTimeInMillis
+    log.println("[EDJoin] Tempo inizializzazione " + (t3 - t2))
 
     //Per ogni documento
     sortedDocs.foreach { case (docId, qgrams) =>
@@ -161,10 +164,10 @@ object EDJoin {
     val sortedDocMap = sortedDocs.toMap
     val documentMap = documents.toMap
 
-    log.println("Numero pre-candidati (questi vengono tutti parsati dal common filter) " + preCandidates.length)
+    log.println("[EDJoin] Numero pre-candidati (questi vengono tutti parsati dal common filter) " + preCandidates.length)
 
-    val t3 = Calendar.getInstance().getTimeInMillis
-    log.println("[EDJoin] Tempo precandidati " + CommonFunctions.msToMin(t3 - t2))
+    val t4 = Calendar.getInstance().getTimeInMillis
+    log.println("[EDJoin] Tempo precandidati " + (t4 - t3))
 
     //Ora la fase di verifica finale
     val candidates = preCandidates.filter { case (doc1Id, doc2Id) =>
@@ -177,11 +180,13 @@ object EDJoin {
       }
     }
 
-    val t4 = Calendar.getInstance().getTimeInMillis
+    val t5 = Calendar.getInstance().getTimeInMillis
     log.println("[EDJoin] Numero candidati " + candidates.length)
-    log.println("[EDJoin] Tempo verifica " + CommonFunctions.msToMin(t4 - t3))
+    log.println("[EDJoin] Tempo common filter " + (t5 - t4))
+    log.println("[EDJoin] Tempo di JOIN complessivo " + (t5 - t3))
+    val tJoin = t5 - t3
 
-    (documentMap, candidates)
+    (documentMap, candidates, tIndex, tJoin)
   }
 
 

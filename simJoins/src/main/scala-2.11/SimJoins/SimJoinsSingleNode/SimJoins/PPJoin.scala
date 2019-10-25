@@ -58,10 +58,16 @@ object PPJoin {
     pairs
   }
 
-  def getCandidates(documents: List[(Long, String)], threshold: Double, log: PrintWriter): (Map[Long, Array[Int]], List[(Long, Long)]) = {
+  def getCandidates(documents: List[(Long, String)], threshold: Double, log: PrintWriter): (Map[Long, Array[Int]], List[(Long, Long)], Long, Long) = {
 
     val tokenizedDocSort = CommonJsFunctions.tokenizeAndSort(documents).toMap
+
+    val t1 = Calendar.getInstance().getTimeInMillis
     val prefixIndex = CommonJsFunctions.buildPrefixIndex(tokenizedDocSort.toList, threshold)
+    val t2 = Calendar.getInstance().getTimeInMillis
+    val tPrefix = t2 - t1
+    log.println("[PPJOIN] Tempo creazione prefix index " + (t2 - t1))
+
 
     //val candidates = new mutable.HashSet[(Long, Long)]
     var candidates: List[(Long, Long)] = Nil
@@ -84,11 +90,14 @@ object PPJoin {
         }
       }
     }
+    val t3 = Calendar.getInstance().getTimeInMillis
+    log.println("[PPJOIN] Tempo di join " + (t3 - t2))
+    val tJoin = t3 - t2
 
-    log.println("Numero di volte che ha attivato il position filter " + comparisonNumbers)
-    log.println("Numero di candidati " + candidates.length)
+    log.println("[PPJOIN] Numero di volte che ha attivato il position filter " + comparisonNumbers)
+    log.println("[PPJOIN] Numero di candidati " + candidates.length)
     log.flush()
-    (tokenizedDocSort, candidates)
+    (tokenizedDocSort, candidates, tPrefix, tJoin)
   }
 
   def getMatches(documents: List[(Long, String)], threshold: Double, log: PrintWriter): List[(Long, Long)] = {
@@ -140,7 +149,7 @@ object PPJoin {
 
     log.println("[PPJoin] Numero attivazioni position filter " + posFilterActivations)
     log.println("[PPJoin] Tempo generazione candidati (no preprocessing) (min) " + CommonFunctions.msToMin(endCandTime.getTimeInMillis - startTime.getTimeInMillis))
-    log.println("[PPJoin] Numero di coppie candidate "+candidates.length)
+    log.println("[PPJoin] Numero di coppie candidate " + candidates.length)
 
     val pairs = candidates.filter { case (doc1Id, doc2Id) =>
       val d1 = tokenizedDocSort.get(doc1Id)
@@ -157,7 +166,7 @@ object PPJoin {
 
     val endTime = Calendar.getInstance()
 
-    log.println("[PPJoin] Numero di coppie verificate "+pairs.length)
+    log.println("[PPJoin] Numero di coppie verificate " + pairs.length)
     log.println("[PPJoin] Tempo totale (min) " + CommonFunctions.msToMin(endTime.getTimeInMillis - startTime.getTimeInMillis))
 
     pairs

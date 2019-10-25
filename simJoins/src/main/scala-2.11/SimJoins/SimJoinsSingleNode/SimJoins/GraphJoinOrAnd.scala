@@ -12,8 +12,8 @@ import SimJoins.DataStructure.{PrefixEntry, Profile, Qgram}
 
 /**
   * @author Luca Gagliardelli
-  * @since 23/20/2019
-  * */
+  * @since 23/10/2019
+  **/
 object GraphJoinOrAnd {
 
   object sortTypes {
@@ -433,9 +433,10 @@ object GraphJoinOrAnd {
     /**
       * Esegue il pre-processing per creare tutti gli indici che servono per il processo di join
       **/
+    val t1 = Calendar.getInstance().getTimeInMillis
     val (sortedTokensPerDocument, prefixIndexJS, prefixIndexED, docTokens) = preprocessing(profiles, conditionsOR, log, sortType, qgramLength)
-
     val t4 = Calendar.getInstance().getTimeInMillis
+    log.println("[GraphJoin] Tempo creazione indici " + (t4 - t1))
 
     /** Elenco di candidati */
     var candidates: List[(Long, Long)] = Nil
@@ -493,7 +494,7 @@ object GraphJoinOrAnd {
 
     val t5 = Calendar.getInstance().getTimeInMillis
 
-    log.println("[GraphJoin] Tempo inizializzazione " + CommonFunctions.msToMin(t5 - t4))
+    log.println("[GraphJoin] Tempo inizializzazione " + (t5 - t4))
 
     /** Per ogni documento presente */
     sortedTokensPerDocument.foreach { case (docId, attributesTokens) =>
@@ -658,7 +659,7 @@ object GraphJoinOrAnd {
 
     val t6 = Calendar.getInstance().getTimeInMillis
 
-    log.println("[GraphJoin] Tempo di join (no preprocessing) " + CommonFunctions.msToMin(t6 - t5))
+    log.println("[GraphJoin] Tempo di join (no preprocessing) " + (t6 - t5))
 
     val pairs = verify(candidates, docTokens, conditionsOR)
 
@@ -666,7 +667,8 @@ object GraphJoinOrAnd {
 
     val t7 = Calendar.getInstance().getTimeInMillis
 
-    log.println("[GraphJoin] Tempo di verifica " + CommonFunctions.msToMin(t7 - t6))
+    log.println("[GraphJoin] Tempo di verifica " + (t7 - t6))
+    log.println("[GraphJoin] STAT: " + (t4 - t1) + "," + (t6 - t5) + "," + (t7 - t6))
 
     log.println(conditionsOR + ";" + sortType + ";" + positionNumber + ";" + candidates.length + ";" + pairs.length)
 
